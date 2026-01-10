@@ -16,6 +16,8 @@ export interface LogEntry {
 interface TeletypeLogProps {
     logs: LogEntry[];
     className?: string;
+    hideHeader?: boolean;
+    darkMode?: boolean;
 }
 
 const logPrefixes: Record<LogType, string> = {
@@ -26,32 +28,31 @@ const logPrefixes: Record<LogType, string> = {
     CONFIRM: "CONFIRM:",
 };
 
-function LogLine({ entry }: { entry: LogEntry }) {
+function LogLine({ entry }: { entry: LogEntry; darkMode?: boolean }) {
     return (
         <motion.div
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            className="py-0.5 font-mono text-xs leading-relaxed"
-            style={{ fontFamily: 'JetBrains Mono' }}
+            className="py-0.5 font-mono text-xs leading-relaxed border-l-2 border-transparent hover:border-white/10 hover:bg-white/5 px-2 -mx-2 rounded-sm transition-colors"
         >
-            <span className="text-typewriter/50">{entry.timestamp}</span>
-            <span className="mx-2 text-typewriter/30">|</span>
+            <span className="text-muted-foreground/40">{entry.timestamp}</span>
+            <span className="mx-2 text-muted-foreground/20">|</span>
             <span className={cn(
                 "font-bold",
-                entry.type === "SUBJ" && "text-jet",
-                entry.type === "ACTION" && "text-kraft-dark",
-                entry.type === "SYSTEM" && "text-typewriter",
-                entry.type === "ERROR" && "text-red-ink",
-                entry.type === "CONFIRM" && "text-green-800"
+                entry.type === "SUBJ" && "text-foreground",
+                entry.type === "ACTION" && "text-brand-persimmon",
+                entry.type === "SYSTEM" && "text-muted-foreground",
+                entry.type === "ERROR" && "text-red-400",
+                entry.type === "CONFIRM" && "text-brand-turquoise"
             )}>
                 {logPrefixes[entry.type]}
             </span>
-            <span className="ml-2 text-jet">{entry.message}</span>
+            <span className="ml-2 text-foreground/90">{entry.message}</span>
         </motion.div>
     );
 }
 
-export function TeletypeLog({ logs, className }: TeletypeLogProps) {
+export function TeletypeLog({ logs, className, hideHeader, darkMode = true }: TeletypeLogProps) {
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // Auto-scroll to bottom when new logs are added
@@ -64,61 +65,48 @@ export function TeletypeLog({ logs, className }: TeletypeLogProps) {
     return (
         <div
             className={cn(
-                "flex flex-col bg-ivory border border-kraft rounded-sm overflow-hidden",
+                "flex flex-col rounded-xl overflow-hidden glass",
                 className
             )}
         >
-            {/* Receipt paper header with perforated edge effect */}
-            <div className="flex items-center justify-between px-4 py-2 border-b border-kraft bg-ivory">
-                <div className="flex items-center gap-2">
-                    <span
-                        className="text-xs uppercase tracking-widest text-jet font-bold"
-                        style={{ fontFamily: 'Roboto Slab' }}
-                    >
-                        ▶ TELETYPE LOG
+            {/* Header */}
+            {!hideHeader && (
+                <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-white/5">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs uppercase tracking-widest font-bold text-foreground font-display">
+                            ▶ TELETYPE LOG
+                        </span>
+                    </div>
+                    <span className="text-[10px] font-mono text-muted-foreground">
+                        {logs.length} ENTRIES
                     </span>
                 </div>
-                <span className="text-[10px] font-mono text-typewriter">
-                    {logs.length} ENTRIES
-                </span>
-            </div>
+            )}
 
-            {/* Perforated edge decoration */}
-            <div className="h-2 bg-ivory border-b border-dashed border-kraft/50 relative overflow-hidden">
-                <div className="absolute inset-x-0 top-0 h-full flex justify-around">
-                    {[...Array(40)].map((_, i) => (
-                        <div key={i} className="w-1 h-1 rounded-full bg-kraft/30" />
-                    ))}
-                </div>
-            </div>
-
-            {/* Log Content - receipt/teletype paper style */}
+            {/* Log Content */}
             <div
                 ref={scrollRef}
-                className="flex-1 overflow-y-auto px-4 py-2 scrollbar-paper"
-                style={{
-                    background: 'repeating-linear-gradient(transparent, transparent 19px, rgba(212, 162, 127, 0.1) 20px)'
-                }}
+                className="flex-1 overflow-y-auto px-4 py-2 scrollbar-thin"
             >
                 <AnimatePresence>
                     {logs.length === 0 ? (
                         <div className="h-full flex items-center justify-center">
-                            <div className="text-center text-typewriter/50 font-mono text-xs">
+                            <div className="text-center font-mono text-xs text-muted-foreground/50">
                                 <p>--- AWAITING INPUT ---</p>
                                 <p className="mt-1 text-[10px]">Teletype ready for transmission</p>
                             </div>
                         </div>
                     ) : (
-                        logs.map((entry) => <LogLine key={entry.id} entry={entry} />)
+                        logs.map((entry) => <LogLine key={entry.id} entry={entry} darkMode={true} />)
                     )}
                 </AnimatePresence>
 
                 {/* Cursor at end */}
                 {logs.length > 0 && (
                     <div className="flex items-center py-1 font-mono text-xs">
-                        <span className="text-typewriter">&gt;</span>
+                        <span className="text-muted-foreground">&gt;</span>
                         <motion.span
-                            className="w-2 h-3 bg-jet ml-1"
+                            className="w-2 h-3 ml-1 bg-primary"
                             animate={{ opacity: [1, 0, 1] }}
                             transition={{ duration: 0.8, repeat: Infinity }}
                         />

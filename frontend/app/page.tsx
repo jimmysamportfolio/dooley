@@ -1,17 +1,20 @@
+// ... imports
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { Play, Square, FileText, Eye, Zap } from "lucide-react";
+import { Play, Square, RotateCcw } from "lucide-react";
 import { MicrofilmViewer } from "@/components/dashboard/VideoFeed";
 import { ActionList, type Action, type ActionStatus } from "@/components/dashboard/ActionList";
-import { TeletypeLog, type LogEntry, type LogType } from "@/components/dashboard/TerminalLog";
+import { BrowserView } from "@/components/dashboard/BrowserView";
+import { DraggableLog } from "@/components/dashboard/DraggableLog";
+import { type LogEntry, type LogType } from "@/components/dashboard/TerminalLog";
 import { cn } from "@/lib/utils";
 
 // System status types
 type SystemStatus = "IDLE" | "ANALYZING" | "RUNNING" | "COMPLETE";
-type TabType = "SURVEILLANCE" | "EVIDENCE" | "ACTION";
+type ViewMode = "upload" | "execution";
 
 // Mock actions that will be executed
 const MOCK_ACTIONS: Omit<Action, "status">[] = [
@@ -70,43 +73,18 @@ function generateId(): string {
     return Math.random().toString(36).substring(2, 9);
 }
 
-// Folder Tab Component
-function FolderTab({
-    label,
-    icon: Icon,
-    isActive,
-    onClick
-}: {
-    label: string;
-    icon: React.ElementType;
-    isActive: boolean;
-    onClick: () => void;
-}) {
-    return (
-        <button
-            onClick={onClick}
-            className={cn(
-                "relative px-4 py-2 rounded-t-sm border border-b-0 transition-all",
-                "font-bold text-xs uppercase tracking-wider flex items-center gap-2",
-                isActive
-                    ? "bg-ivory border-kraft text-jet z-10 -mb-px"
-                    : "bg-kraft/30 border-kraft/50 text-typewriter hover:bg-kraft/50"
-            )}
-            style={{ fontFamily: 'Roboto Slab' }}
-        >
-            <Icon className="w-3 h-3" />
-            {label}
-        </button>
-    );
-}
-
 export default function CaseFilePage() {
+    const [viewMode, setViewMode] = useState<ViewMode>("upload");
     const [status, setStatus] = useState<SystemStatus>("IDLE");
-    const [activeTab, setActiveTab] = useState<TabType>("SURVEILLANCE");
     const [isVideoLoaded, setIsVideoLoaded] = useState(false);
     const [actions, setActions] = useState<Action[]>([]);
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [currentStep, setCurrentStep] = useState<number>(-1);
+    const completionHandled = useRef(false);
+
+    // Derive current action description
+    const currentAction = currentStep >= 0 && currentStep < actions.length ? actions[currentStep] : null;
+    const currentActionDescription = currentAction ? `${currentAction.type}: ${currentAction.description}` : "";
 
     // Add a log entry
     const addLog = useCallback((type: LogType, message: string) => {
@@ -135,6 +113,7 @@ export default function CaseFilePage() {
     const handleVideoUpload = useCallback(() => {
         setIsVideoLoaded(true);
         setStatus("ANALYZING");
+        setViewMode("execution"); // Transition to split-screen
         addLog("SYSTEM", "SURVEILLANCE FILM LOADED");
         addLog("SUBJ", "INITIATING FRAME ANALYSIS...");
 
@@ -171,39 +150,49 @@ export default function CaseFilePage() {
 
     // Effect to handle step progression during RUNNING status
     useEffect(() => {
-        if (status !== "RUNNING" || currentStep < 0) return;
-
-        if (currentStep >= actions.length) {
-            setStatus("COMPLETE");
-            addLog("CONFIRM", "ALL ACTIONS EXECUTED SUCCESSFULLY");
-            addLog("SYSTEM", "CASE FILE COMPLETE");
+        if (status !== "RUNNING" || currentStep < 0) {
+            completionHandled.current = false;
             return;
         }
 
-        // Update current action to active
-        setActions((prev) =>
-            prev.map((action, idx) => ({
-                ...action,
-                status:
-                    idx < currentStep
-                        ? "complete"
-                        : idx === currentStep
-                            ? "active"
-                            : "pending",
-            }))
-        );
-
-        const currentAction = actions[currentStep];
-        addLog("ACTION", `${currentAction.type} - ${currentAction.description.toUpperCase()}`);
-
-        if (currentAction.type === "CLICK" || currentAction.type === "TYPE") {
-            setTimeout(() => {
-                addLog("SUBJ", `ELEMENT LOCATED: ${currentAction.target}`);
-            }, 500);
+        if (currentStep >= actions.length) {
+            if (!completionHandled.current) {
+                completionHandled.current = true;
+                setTimeout(() => {
+                    setStatus("COMPLETE");
+                    addLog("CONFIRM", "ALL ACTIONS EXECUTED SUCCESSFULLY");
+                    addLog("SYSTEM", "CASE FILE COMPLETE");
+                }, 0);
+            }
+            return;
         }
 
+        const currentAction = actions[currentStep];
+
+        // Use setTimeout to update actions state (avoids sync setState in effect)
+        const updateTimer = setTimeout(() => {
+            setActions((prev) =>
+                prev.map((action, idx) => ({
+                    ...action,
+                    status:
+                        idx < currentStep
+                            ? "complete"
+                            : idx === currentStep
+                                ? "active"
+                                : "pending",
+                }))
+            );
+            addLog("ACTION", `${currentAction.type} - ${currentAction.description.toUpperCase()}`);
+
+            if (currentAction.type === "CLICK" || currentAction.type === "TYPE") {
+                setTimeout(() => {
+                    addLog("SUBJ", `ELEMENT LOCATED: ${currentAction.target}`);
+                }, 500);
+            }
+        }, 0);
+
         // Progress to next step after delay
-        const timer = setTimeout(() => {
+        const progressTimer = setTimeout(() => {
             setActions((prev) =>
                 prev.map((action, idx) => ({
                     ...action,
@@ -214,7 +203,10 @@ export default function CaseFilePage() {
             setCurrentStep((prev) => prev + 1);
         }, 2000);
 
-        return () => clearTimeout(timer);
+        return () => {
+            clearTimeout(updateTimer);
+            clearTimeout(progressTimer);
+        };
     }, [status, currentStep, actions, addLog]);
 
     // Reset functionality
@@ -224,117 +216,151 @@ export default function CaseFilePage() {
         setActions([]);
         setLogs([]);
         setCurrentStep(-1);
+
+        setViewMode("upload"); // Go back to upload screen
     }, []);
 
     return (
-        <div className="min-h-screen w-screen bg-manilla p-6 md:p-8">
-            {/* Main Container */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="max-w-6xl mx-auto"
-            >
-                {/* Header */}
-                <div className="mb-6 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 bg-kraft rounded-xl flex items-center justify-center overflow-hidden shadow-sm">
-                            <Image src="/dooley-favicon.png" alt="Dooley" width={36} height={36} className="object-contain" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-bold text-jet tracking-wide">
-                                Dooley
-                            </h1>
-                            <p className="text-xs text-typewriter/70">
-                                Automated Browser Agent
-                            </p>
-                        </div>
-                    </div>
+        <div className="min-h-screen w-screen bg-background text-foreground grid-bg">
+            {/* Ambient Glows */}
+            <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-brand-turquoise/5 rounded-full blur-[100px] pointer-events-none" />
 
-                    {/* Status Badge */}
-                    <div className={cn(
-                        "px-4 py-2 rounded-full text-xs font-medium",
-                        status === "IDLE" && "bg-gray-100 text-gray-600",
-                        status === "ANALYZING" && "bg-amber-50 text-amber-700",
-                        status === "RUNNING" && "bg-red-50 text-red-600",
-                        status === "COMPLETE" && "bg-green-50 text-green-700"
-                    )}>
-                        {status === "IDLE" && "Ready"}
-                        {status === "ANALYZING" && "Analyzing..."}
-                        {status === "RUNNING" && "Running"}
-                        {status === "COMPLETE" && "Complete"}
-                    </div>
-                </div>
+            <AnimatePresence mode="wait">
+                {viewMode === "upload" ? (
+                    /* Full Screen Upload View - Horizontal Layout */
+                    <motion.div
+                        key="upload"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0, scale: 0.98 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <MicrofilmViewer
+                            isLoaded={isVideoLoaded}
+                            isAnalyzing={status === "ANALYZING"}
+                            onUpload={handleVideoUpload}
+                            fullScreen
+                        />
+                    </motion.div>
+                ) : (
+                    /* Split Screen Execution View */
+                    <motion.div
+                        key="execution"
+                        initial={{ opacity: 0, scale: 1.02 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.4 }}
+                        className="min-h-screen flex flex-col relative z-10"
+                    >
+                        {/* Header */}
+                        <div className="relative z-10 flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/[0.02] backdrop-blur-md">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shadow-sm">
+                                    <Image src="/dooley-favicon.png" alt="Dooley" width={28} height={28} className="object-contain" />
+                                </div>
+                                <div>
+                                    <h1 className="text-lg font-bold text-foreground tracking-wide font-display">
+                                        Dooley
+                                    </h1>
+                                    <p className="text-xs text-muted-foreground">
+                                        Mission Control
+                                    </p>
+                                </div>
+                            </div>
 
-                {/* Main Content Card */}
-                <div className="bg-ivory rounded-2xl shadow-sm overflow-hidden">
-                    {/* Main Content Grid */}
-                    <div className="grid grid-cols-1 lg:grid-cols-5 min-h-[520px]">
-                        {/* Left Panel - Input Viewer */}
-                        <div className="lg:col-span-3 p-6">
-                            <MicrofilmViewer
-                                isLoaded={isVideoLoaded}
-                                isAnalyzing={status === "ANALYZING"}
-                                onUpload={handleVideoUpload}
-                            />
-                        </div>
-
-                        {/* Right Panel - Action Queue */}
-                        <div className="lg:col-span-2 p-6 bg-gray-50/50 flex flex-col">
-                            <ActionList actions={actions} className="flex-1 min-h-0" />
-
-                            {/* Action Button */}
-                            <div className="mt-4 pt-4">
-                                {status === "RUNNING" ? (
-                                    <motion.button
-                                        onClick={stopMission}
-                                        className="w-full py-3 rounded-xl bg-red-500 text-white font-medium text-sm flex items-center justify-center gap-2 hover:bg-red-600 transition-colors"
-                                        whileTap={{ scale: 0.98 }}
-                                    >
-                                        <Square className="w-4 h-4" />
-                                        Stop
-                                    </motion.button>
-                                ) : status === "COMPLETE" ? (
-                                    <motion.button
-                                        onClick={resetMission}
-                                        className="w-full py-3 rounded-xl bg-gray-800 text-white font-medium text-sm flex items-center justify-center gap-2 hover:bg-gray-900 transition-colors"
-                                        whileTap={{ scale: 0.98 }}
-                                    >
-                                        Start New
-                                    </motion.button>
-                                ) : (
-                                    <motion.button
-                                        onClick={runMission}
-                                        disabled={actions.length === 0}
-                                        className={cn(
-                                            "w-full py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all",
-                                            actions.length > 0
-                                                ? "bg-kraft text-jet hover:bg-kraft-dark"
-                                                : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                        )}
-                                        whileTap={actions.length > 0 ? { scale: 0.98 } : {}}
-                                    >
-                                        <Play className="w-4 h-4" />
-                                        Execute
-                                    </motion.button>
-                                )}
+                            {/* Status Badge */}
+                            <div className={cn(
+                                "px-4 py-2 rounded-full text-xs font-medium border shadow-sm backdrop-blur-sm",
+                                status === "IDLE" && "bg-white/5 border-white/10 text-muted-foreground",
+                                status === "ANALYZING" && "bg-brand-turquoise/10 border-brand-turquoise/20 text-brand-turquoise",
+                                status === "RUNNING" && "bg-primary/10 border-primary/20 text-primary",
+                                status === "COMPLETE" && "bg-green-500/10 border-green-500/20 text-green-400"
+                            )}>
+                                <div className="flex items-center gap-2">
+                                    <div className={cn(
+                                        "w-2 h-2 rounded-full",
+                                        status === "IDLE" && "bg-muted-foreground",
+                                        status === "ANALYZING" && "bg-brand-turquoise animate-pulse",
+                                        status === "RUNNING" && "bg-primary animate-pulse",
+                                        status === "COMPLETE" && "bg-green-500"
+                                    )} />
+                                    {status === "IDLE" && "Ready"}
+                                    {status === "ANALYZING" && "Analyzing..."}
+                                    {status === "RUNNING" && "Running"}
+                                    {status === "COMPLETE" && "Complete"}
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Log Panel */}
-                    <div className="border-t border-gray-100">
-                        <TeletypeLog logs={logs} className="h-40 rounded-none border-0" />
-                    </div>
-                </div>
+                        {/* Main Split Screen Content */}
+                        <div className="relative z-10 flex-1 flex flex-col lg:flex-row p-6 gap-6 overflow-hidden">
+                            {/* Left Panel - Action Queue (40%) */}
+                            <div className="lg:w-[40%] flex flex-col">
+                                <div className="flex-1 bg-card border border-white/10 rounded-2xl p-6 flex flex-col shadow-2xl overflow-hidden glass-card">
+                                    <ActionList actions={actions} className="flex-1 min-h-0" />
 
-                {/* Footer */}
-                <div className="mt-4 text-center">
-                    <p className="text-xs text-typewriter/40">
-                        Stillwater · Journey Hacks 2026
-                    </p>
-                </div>
-            </motion.div>
+                                    {/* Action Button */}
+                                    <div className="mt-4 pt-4 border-t border-white/10">
+                                        {status === "RUNNING" ? (
+                                            <motion.button
+                                                onClick={stopMission}
+                                                className="w-full py-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 font-medium text-sm flex items-center justify-center gap-2 hover:bg-red-500/20 transition-colors shadow-sm"
+                                                whileTap={{ scale: 0.98 }}
+                                            >
+                                                <Square className="w-4 h-4" />
+                                                Stop Execution
+                                            </motion.button>
+                                        ) : status === "COMPLETE" ? (
+                                            <motion.button
+                                                onClick={resetMission}
+                                                className="w-full py-3 rounded-xl bg-white/10 text-foreground border border-white/10 font-medium text-sm flex items-center justify-center gap-2 hover:bg-white/20 transition-colors shadow-sm"
+                                                whileTap={{ scale: 0.98 }}
+                                            >
+                                                <RotateCcw className="w-4 h-4" />
+                                                Start New Mission
+                                            </motion.button>
+                                        ) : (
+                                            <motion.button
+                                                onClick={runMission}
+                                                disabled={actions.length === 0}
+                                                className={cn(
+                                                    "w-full py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all shadow-sm",
+                                                    actions.length > 0
+                                                        ? "bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20"
+                                                        : "bg-white/5 text-muted-foreground cursor-not-allowed border border-white/5"
+                                                )}
+                                                whileTap={actions.length > 0 ? { scale: 0.98 } : {}}
+                                            >
+                                                <Play className="w-4 h-4" />
+                                                Execute Actions
+                                            </motion.button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right Panel - Browser View (60%) */}
+                            <div className="lg:w-[60%] h-full min-h-0">
+                                <BrowserView
+                                    isAnalyzing={status === "ANALYZING"}
+                                    isRunning={status === "RUNNING"}
+                                    currentAction={currentActionDescription}
+                                    className="h-full"
+                                    darkMode={true}
+                                />
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Floating Draggable Log - Only show in execution mode */}
+            {viewMode === "execution" && (
+                <DraggableLog
+                    logs={logs}
+                    darkMode={true}
+                />
+            )}
         </div>
     );
 }
-
