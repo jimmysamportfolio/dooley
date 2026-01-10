@@ -13,17 +13,22 @@ function Node({
     label,
     icon: Icon,
     color = "#ffffff",
+    size = 1,
 }: {
     position: [number, number, number];
     label: string;
     icon: any;
     color?: string;
+    size?: number;
 }) {
+    const nodeSize = size;
+    const rimSize = nodeSize * 1.02;
+    
     return (
         <group position={position}>
             <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.2} floatingRange={[-0.1, 0.1]}>
-                {/* The Chip (Flat Tile) */}
-                <RoundedBox args={[0.8, 0.1, 0.8]} radius={0.05} smoothness={4}>
+                {/* The Chip (Flat Tile) - Made slightly larger */}
+                <RoundedBox args={[nodeSize, 0.12, nodeSize]} radius={0.05} smoothness={4}>
                     <MeshTransmissionMaterial
                         backside
                         backsideThickness={1}
@@ -40,8 +45,8 @@ function Node({
                 </RoundedBox>
 
                 {/* Colored Rim/Glow */}
-                <mesh position={[0, -0.04, 0]}>
-                    <boxGeometry args={[0.82, 0.08, 0.82]} />
+                <mesh position={[0, -0.05, 0]}>
+                    <boxGeometry args={[rimSize, 0.1, rimSize]} />
                     <meshBasicMaterial color={color} transparent opacity={0.4} />
                 </mesh>
 
@@ -72,12 +77,19 @@ function Node({
 // Data Connection
 function Connection({ start, end, color = "#22d3ee", speed = 0.5 }: { start: [number, number, number]; end: [number, number, number]; color?: string; speed?: number }) {
     const curve = useMemo(() => {
-        // Create a stepped/circuit-like curve or smooth? 
-        // User asked for "better flow", "LiveKit" often uses smooth or right-angle.
-        // Let's go with smooth CatmullRom for fluid data motion.
+        // Create smooth curves for branching pattern
+        // Calculate distance to determine curve height
+        const dx = end[0] - start[0];
+        const dy = end[1] - start[1];
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // For horizontal connections, use minimal arc
+        // For branching connections, use more pronounced arc
+        const arcHeight = Math.abs(dy) > 0.5 ? 0.8 : 0.3;
+        
         const mid = [
             (start[0] + end[0]) / 2,
-            (start[1] + end[1]) / 2 + 0.5, // Arc up
+            (start[1] + end[1]) / 2 + arcHeight,
             (start[2] + end[2]) / 2,
         ];
         return new THREE.CatmullRomCurve3([
@@ -114,55 +126,62 @@ function Connection({ start, end, color = "#22d3ee", speed = 0.5 }: { start: [nu
 export function WorkflowGraph() {
     return (
         <>
-            {/* Isometric Camera Setup */}
-            <OrthographicCamera makeDefault position={[10, 10, 10]} zoom={65} near={-50} far={200} onUpdate={c => c.lookAt(0, 0, 0)} />
+            {/* Isometric Camera Setup - Adjusted for larger view */}
+            <OrthographicCamera makeDefault position={[10, 10, 10]} zoom={40} near={-50} far={200} onUpdate={c => c.lookAt(0, 0, 0)} />
 
             <group position={[0, -1, 0]}>
-                {/* 1. User */}
+                {/* 1. User - Left Node */}
                 <Node
-                    position={[-4, 0, -2]}
+                    position={[-5, 0, 0]}
                     label="User"
                     icon={User}
                     color="#A3A3A3"
                 />
 
-                {/* 2. Gemini */}
+                {/* 2. Gemini - Top Middle Node */}
                 <Node
-                    position={[-2, 0.5, -1]}
+                    position={[-1.5, 1.5, 0]}
                     label="Gemini 2.0"
                     icon={Sparkles}
                     color="#1FD5F9"
                 />
 
-                {/* 3. FastAPI */}
+                {/* 3. FastAPI - Bottom Middle Node */}
                 <Node
-                    position={[0, 0, 0]}
+                    position={[-1.5, -1.5, 0]}
                     label="FastAPI"
                     icon={Zap}
                     color="#FFDD00"
                 />
 
-                {/* 4. Playwright */}
+                {/* 4. Playwright - Right Middle Node (Larger) */}
                 <Node
-                    position={[2, 0.5, 1]}
+                    position={[2.5, 0, 0]}
                     label="Playwright"
                     icon={Terminal}
                     color="#FF6352"
+                    size={1.4}
                 />
 
-                {/* 5. Browser */}
+                {/* 5. Browser - Rightmost Node */}
                 <Node
-                    position={[4, 0, 2]}
+                    position={[6, 0, 0]}
                     label="Browser"
                     icon={AppWindow}
                     color="#10B981"
                 />
 
-                {/* Connections */}
-                <Connection start={[-4, 0, -2]} end={[-2, 0.5, -1]} color="#1FD5F9" speed={0.4} />
-                <Connection start={[-2, 0.5, -1]} end={[0, 0, 0]} color="#FFDD00" speed={0.5} />
-                <Connection start={[0, 0, 0]} end={[2, 0.5, 1]} color="#FF6352" speed={0.6} />
-                <Connection start={[2, 0.5, 1]} end={[4, 0, 2]} color="#10B981" speed={0.7} />
+                {/* Connections - Branching Pattern */}
+                {/* Left to Top Middle (curved up) */}
+                <Connection start={[-5, 0, 0]} end={[-1.5, 1.5, 0]} color="#1FD5F9" speed={0.4} />
+                {/* Left to Bottom Middle (curved down) */}
+                <Connection start={[-5, 0, 0]} end={[-1.5, -1.5, 0]} color="#FFDD00" speed={0.4} />
+                {/* Top Middle to Right Middle (curved) */}
+                <Connection start={[-1.5, 1.5, 0]} end={[2.5, 0, 0]} color="#FF6352" speed={0.5} />
+                {/* Bottom Middle to Right Middle (curved) */}
+                <Connection start={[-1.5, -1.5, 0]} end={[2.5, 0, 0]} color="#FF6352" speed={0.5} />
+                {/* Right Middle to Rightmost (straight) */}
+                <Connection start={[2.5, 0, 0]} end={[6, 0, 0]} color="#10B981" speed={0.6} />
 
                 {/* Lighting for Glass */}
                 <ambientLight intensity={1} />

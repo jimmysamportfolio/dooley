@@ -12,14 +12,14 @@ interface LiveKitHeroProps {
 
 export function LiveKitHero({ onStart, children }: LiveKitHeroProps) {
     return (
-        <div className="w-full max-w-[1400px] mx-auto px-8 py-20 grid grid-cols-1 lg:grid-cols-[0.8fr_1.2fr] gap-12 items-center">
+        <div className="w-full max-w-[1800px] mx-auto px-6 sm:px-8 lg:px-12 xl:px-16 py-12 lg:py-20 xl:py-24 grid grid-cols-1 lg:grid-cols-[0.65fr_1.35fr] gap-6 lg:gap-12 xl:gap-20 items-center">
             {/* Left Column: Typography */}
-            <div className="flex flex-col items-start text-left space-y-6 z-10 order-2 lg:order-1 min-w-[300px]">
+            <div className="flex flex-col items-start text-left space-y-4 lg:space-y-5 xl:space-y-6 z-10 order-2 lg:order-1 min-w-[280px] lg:pr-4 xl:pr-8">
                 <motion.h1
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6 }}
-                    className="text-4xl lg:text-5xl font-bold tracking-tight leading-[1.15] text-foreground font-display"
+                    className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight leading-[1.1] text-foreground font-display"
                 >
                     Build apps that can
                     <br />
@@ -32,7 +32,7 @@ export function LiveKitHero({ onStart, children }: LiveKitHeroProps) {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.2 }}
-                    className="text-lg text-muted-foreground/80 max-w-md leading-relaxed font-sans"
+                    className="text-base sm:text-lg lg:text-xl text-muted-foreground/80 max-w-lg leading-relaxed font-sans"
                 >
                     The open source framework for browser automation agents.
                     Orchestrate complex web workflows with visual understanding.
@@ -70,9 +70,9 @@ export function LiveKitHero({ onStart, children }: LiveKitHeroProps) {
                 )}
             </div>
 
-            {/* Right Column: 3D Scene */}
-            <div className="relative h-[500px] lg:h-[700px] w-full lg:block order-1 lg:order-2">
-                <div className="absolute inset-0 bg-brand-turquoise/5 blur-[80px] rounded-full pointer-events-none" />
+            {/* Right Column: 3D Scene - Made Bigger */}
+            <div className="relative h-[500px] sm:h-[600px] lg:h-[900px] xl:h-[1000px] 2xl:h-[1100px] w-full lg:block order-1 lg:order-2">
+                <div className="absolute inset-0 bg-brand-turquoise/5 blur-[120px] rounded-full pointer-events-none" />
                 <Canvas className="w-full h-full">
                     <WorkflowGraph />
                 </Canvas>

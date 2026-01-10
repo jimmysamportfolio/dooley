@@ -51,33 +51,33 @@ export function MicrofilmViewer({ isLoaded, isAnalyzing, onUpload, onUrlSubmit, 
                 <div className="flex-1 w-full overflow-y-auto overflow-x-hidden custom-scrollbar">
                     {/* Hero Section */}
                     <LiveKitHero>
-                        <div className="bg-[#111111] border border-white/10 rounded-xl shadow-2xl p-6 w-full relative">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-sm font-bold text-foreground">Start Building</h3>
+                        <div className="bg-[#111111] border border-white/10 rounded-xl lg:rounded-2xl shadow-2xl p-5 lg:p-7 xl:p-8 w-full relative">
+                            <div className="flex items-center justify-between mb-5 lg:mb-6">
+                                <h3 className="text-base lg:text-lg font-bold text-foreground">Start Building</h3>
                                 <div className="flex gap-2 p-1 bg-white/5 rounded-lg border border-white/5">
                                     <button
                                         onClick={() => setInputMode("video")}
                                         className={cn(
-                                            "p-1.5 rounded-md transition-all text-xs",
+                                            "p-1.5 lg:p-2 rounded-md transition-all text-xs lg:text-sm",
                                             inputMode === "video"
                                                 ? "bg-white/10 text-foreground shadow-sm"
                                                 : "text-muted-foreground hover:text-foreground"
                                         )}
                                         title="Video"
                                     >
-                                        <Film className="w-3.5 h-3.5" />
+                                        <Film className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                                     </button>
                                     <button
                                         onClick={() => setInputMode("url")}
                                         className={cn(
-                                            "p-1.5 rounded-md transition-all text-xs",
+                                            "p-1.5 lg:p-2 rounded-md transition-all text-xs lg:text-sm",
                                             inputMode === "url"
                                                 ? "bg-white/10 text-foreground shadow-sm"
                                                 : "text-muted-foreground hover:text-foreground"
                                         )}
                                         title="URL"
                                     >
-                                        <Link className="w-3.5 h-3.5" />
+                                        <Link className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                                     </button>
                                 </div>
                             </div>
@@ -91,18 +91,18 @@ export function MicrofilmViewer({ isLoaded, isAnalyzing, onUpload, onUrlSubmit, 
                                     transition={{ duration: 0.2 }}
                                 >
                                     <div
-                                        className="cursor-pointer group border border-dashed border-white/10 rounded-lg p-6 hover:border-brand-turquoise/50 hover:bg-brand-turquoise/5 transition-all text-center"
+                                        className="cursor-pointer group border border-dashed border-white/10 rounded-lg p-6 lg:p-8 hover:border-brand-turquoise/50 hover:bg-brand-turquoise/5 transition-all text-center"
                                         onClick={onUpload}
                                     >
-                                        <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform group-hover:bg-brand-turquoise/10">
-                                            <Upload className="w-5 h-5 text-muted-foreground group-hover:text-brand-turquoise transition-colors" />
+                                        <div className="w-12 h-12 lg:w-14 lg:h-14 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform group-hover:bg-brand-turquoise/10">
+                                            <Upload className="w-6 h-6 lg:w-7 lg:h-7 text-muted-foreground group-hover:text-brand-turquoise transition-colors" />
                                         </div>
-                                        <p className="text-sm font-medium text-foreground mb-4">
+                                        <p className="text-base lg:text-lg font-medium text-foreground mb-5">
                                             Upload screen recording
                                         </p>
-                                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-white font-medium text-xs transition-transform group-hover:translate-y-[-1px] hover:bg-primary/90 shadow-lg shadow-primary/20 w-full justify-center">
+                                        <div className="inline-flex items-center gap-2 px-5 lg:px-6 py-2.5 lg:py-3 rounded-md bg-primary text-white font-medium text-sm lg:text-base transition-transform group-hover:translate-y-[-1px] hover:bg-primary/90 shadow-lg shadow-primary/20 w-full justify-center">
                                             Analyze File
-                                            <ArrowRight className="w-3.5 h-3.5" />
+                                            <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5" />
                                         </div>
                                     </div>
                                 </motion.div>
@@ -120,7 +120,7 @@ export function MicrofilmViewer({ isLoaded, isAnalyzing, onUpload, onUrlSubmit, 
                                             value={urlInput}
                                             onChange={(e) => setUrlInput(e.target.value)}
                                             placeholder="https://example.com"
-                                            className="w-full px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-foreground focus:outline-none focus:border-brand-turquoise/50 focus:ring-1 focus:ring-brand-turquoise/20 transition-all font-mono text-xs placeholder:text-muted-foreground/50"
+                                            className="w-full px-4 lg:px-5 py-3 lg:py-3.5 rounded-lg bg-white/5 border border-white/10 text-foreground focus:outline-none focus:border-brand-turquoise/50 focus:ring-1 focus:ring-brand-turquoise/20 transition-all font-mono text-sm lg:text-base placeholder:text-muted-foreground/50"
                                             onKeyDown={(e) => e.key === "Enter" && handleUrlSubmit()}
                                         />
                                     </div>
@@ -128,14 +128,14 @@ export function MicrofilmViewer({ isLoaded, isAnalyzing, onUpload, onUrlSubmit, 
                                         onClick={handleUrlSubmit}
                                         disabled={!urlInput.trim()}
                                         className={cn(
-                                            "w-full py-2.5 rounded-lg font-medium text-xs flex items-center justify-center gap-2 transition-all",
+                                            "w-full py-3 lg:py-3.5 rounded-lg font-medium text-sm lg:text-base flex items-center justify-center gap-2 transition-all",
                                             urlInput.trim()
                                                 ? "bg-primary text-white hover:bg-primary/90 hover:translate-y-[-1px] shadow-lg shadow-primary/20"
                                                 : "bg-white/5 text-muted-foreground cursor-not-allowed border border-white/5"
                                         )}
                                     >
                                         Start Analysis
-                                        <ArrowRight className="w-3.5 h-3.5" />
+                                        <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5" />
                                     </button>
                                 </motion.div>
                             )}
@@ -150,34 +150,34 @@ export function MicrofilmViewer({ isLoaded, isAnalyzing, onUpload, onUrlSubmit, 
                             viewport={{ once: true }}
                             className="space-y-12"
                         >
-                            <div className="text-center space-y-4">
-                                <h2 className="text-3xl font-bold font-display">How it works</h2>
-                                <p className="text-muted-foreground max-w-2xl mx-auto">
+                            <div className="text-center space-y-4 lg:space-y-5">
+                                <h2 className="text-3xl lg:text-4xl xl:text-5xl font-bold font-display">How it works</h2>
+                                <p className="text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto">
                                     Dooley captures video input, analyzes visual elements using multimodal models, and converts them into executable Playwright scripts.
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                <div className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-brand-turquoise/30 transition-colors">
-                                    <div className="w-12 h-12 rounded-lg bg-brand-turquoise/10 flex items-center justify-center mb-4">
-                                        <Film className="w-6 h-6 text-brand-turquoise" />
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+                                <div className="p-6 lg:p-8 rounded-xl lg:rounded-2xl bg-white/5 border border-white/10 hover:border-brand-turquoise/30 transition-colors">
+                                    <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-lg bg-brand-turquoise/10 flex items-center justify-center mb-4 lg:mb-5">
+                                        <Film className="w-6 h-6 lg:w-7 lg:h-7 text-brand-turquoise" />
                                     </div>
-                                    <h3 className="text-lg font-bold mb-2">1. Capture</h3>
-                                    <p className="text-sm text-muted-foreground">Record your screen workflow or provide a URL. Dooley watches like a human would.</p>
+                                    <h3 className="text-lg lg:text-xl font-bold mb-2 lg:mb-3">1. Capture</h3>
+                                    <p className="text-sm lg:text-base text-muted-foreground">Record your screen workflow or provide a URL. Dooley watches like a human would.</p>
                                 </div>
-                                <div className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-brand-turquoise/30 transition-colors">
-                                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                                        <Sparkles className="w-6 h-6 text-primary" />
+                                <div className="p-6 lg:p-8 rounded-xl lg:rounded-2xl bg-white/5 border border-white/10 hover:border-brand-turquoise/30 transition-colors">
+                                    <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-lg bg-primary/10 flex items-center justify-center mb-4 lg:mb-5">
+                                        <Sparkles className="w-6 h-6 lg:w-7 lg:h-7 text-primary" />
                                     </div>
-                                    <h3 className="text-lg font-bold mb-2">2. Analyze</h3>
-                                    <p className="text-sm text-muted-foreground">Vision models identify interactive elements, text, and user intent frame-by-frame.</p>
+                                    <h3 className="text-lg lg:text-xl font-bold mb-2 lg:mb-3">2. Analyze</h3>
+                                    <p className="text-sm lg:text-base text-muted-foreground">Vision models identify interactive elements, text, and user intent frame-by-frame.</p>
                                 </div>
-                                <div className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-brand-turquoise/30 transition-colors">
-                                    <div className="w-12 h-12 rounded-lg bg-purple-500/10 flex items-center justify-center mb-4">
-                                        <CheckCircle2 className="w-6 h-6 text-purple-400" />
+                                <div className="p-6 lg:p-8 rounded-xl lg:rounded-2xl bg-white/5 border border-white/10 hover:border-brand-turquoise/30 transition-colors">
+                                    <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-lg bg-purple-500/10 flex items-center justify-center mb-4 lg:mb-5">
+                                        <CheckCircle2 className="w-6 h-6 lg:w-7 lg:h-7 text-purple-400" />
                                     </div>
-                                    <h3 className="text-lg font-bold mb-2">3. Execute</h3>
-                                    <p className="text-sm text-muted-foreground">The workflow is converted into robust code, ready to be replayed at scale.</p>
+                                    <h3 className="text-lg lg:text-xl font-bold mb-2 lg:mb-3">3. Execute</h3>
+                                    <p className="text-sm lg:text-base text-muted-foreground">The workflow is converted into robust code, ready to be replayed at scale.</p>
                                 </div>
                             </div>
                         </motion.div>

@@ -253,16 +253,16 @@ export default function CaseFilePage() {
                         className="min-h-screen flex flex-col relative z-10"
                     >
                         {/* Header */}
-                        <div className="relative z-10 flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/[0.02] backdrop-blur-md">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shadow-sm">
-                                    <Image src="/dooley-favicon.png" alt="Dooley" width={28} height={28} className="object-contain" />
+                        <div className="relative z-10 flex items-center justify-between px-6 lg:px-8 py-4 lg:py-5 border-b border-white/10 bg-white/[0.02] backdrop-blur-md">
+                            <div className="flex items-center gap-3 lg:gap-4">
+                                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shadow-sm">
+                                    <Image src="/dooley-favicon.png" alt="Dooley" width={32} height={32} className="object-contain" />
                                 </div>
                                 <div>
-                                    <h1 className="text-lg font-bold text-foreground tracking-wide font-display">
+                                    <h1 className="text-xl lg:text-2xl font-bold text-foreground tracking-wide font-display">
                                         Dooley
                                     </h1>
-                                    <p className="text-xs text-muted-foreground">
+                                    <p className="text-xs lg:text-sm text-muted-foreground">
                                         Mission Control
                                     </p>
                                 </div>
@@ -270,7 +270,7 @@ export default function CaseFilePage() {
 
                             {/* Status Badge */}
                             <div className={cn(
-                                "px-4 py-2 rounded-full text-xs font-medium border shadow-sm backdrop-blur-sm",
+                                "px-4 lg:px-5 py-2 lg:py-2.5 rounded-full text-xs lg:text-sm font-medium border shadow-sm backdrop-blur-sm",
                                 status === "IDLE" && "bg-white/5 border-white/10 text-muted-foreground",
                                 status === "ANALYZING" && "bg-brand-turquoise/10 border-brand-turquoise/20 text-brand-turquoise",
                                 status === "RUNNING" && "bg-primary/10 border-primary/20 text-primary",
@@ -278,7 +278,7 @@ export default function CaseFilePage() {
                             )}>
                                 <div className="flex items-center gap-2">
                                     <div className={cn(
-                                        "w-2 h-2 rounded-full",
+                                        "w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full",
                                         status === "IDLE" && "bg-muted-foreground",
                                         status === "ANALYZING" && "bg-brand-turquoise animate-pulse",
                                         status === "RUNNING" && "bg-primary animate-pulse",
@@ -293,10 +293,10 @@ export default function CaseFilePage() {
                         </div>
 
                         {/* Main Split Screen Content */}
-                        <div className="relative z-10 flex-1 flex flex-col lg:flex-row p-6 gap-6 overflow-hidden">
+                        <div className="relative z-10 flex-1 flex flex-col lg:flex-row p-4 lg:p-6 xl:p-8 gap-4 lg:gap-6 xl:gap-8 overflow-hidden">
                             {/* Left Panel - Action Queue (40%) */}
                             <div className="lg:w-[40%] flex flex-col">
-                                <div className="flex-1 bg-card border border-white/10 rounded-2xl p-6 flex flex-col shadow-2xl overflow-hidden glass-card">
+                                <div className="flex-1 bg-card border border-white/10 rounded-xl lg:rounded-2xl p-4 lg:p-6 flex flex-col shadow-2xl overflow-hidden glass-card">
                                     <ActionList actions={actions} className="flex-1 min-h-0" />
 
                                     {/* Action Button */}
@@ -304,19 +304,19 @@ export default function CaseFilePage() {
                                         {status === "RUNNING" ? (
                                             <motion.button
                                                 onClick={stopMission}
-                                                className="w-full py-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 font-medium text-sm flex items-center justify-center gap-2 hover:bg-red-500/20 transition-colors shadow-sm"
+                                                className="w-full py-3 lg:py-3.5 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 font-medium text-sm lg:text-base flex items-center justify-center gap-2 hover:bg-red-500/20 transition-colors shadow-sm"
                                                 whileTap={{ scale: 0.98 }}
                                             >
-                                                <Square className="w-4 h-4" />
+                                                <Square className="w-4 h-4 lg:w-5 lg:h-5" />
                                                 Stop Execution
                                             </motion.button>
                                         ) : status === "COMPLETE" ? (
                                             <motion.button
                                                 onClick={resetMission}
-                                                className="w-full py-3 rounded-xl bg-white/10 text-foreground border border-white/10 font-medium text-sm flex items-center justify-center gap-2 hover:bg-white/20 transition-colors shadow-sm"
+                                                className="w-full py-3 lg:py-3.5 rounded-xl bg-white/10 text-foreground border border-white/10 font-medium text-sm lg:text-base flex items-center justify-center gap-2 hover:bg-white/20 transition-colors shadow-sm"
                                                 whileTap={{ scale: 0.98 }}
                                             >
-                                                <RotateCcw className="w-4 h-4" />
+                                                <RotateCcw className="w-4 h-4 lg:w-5 lg:h-5" />
                                                 Start New Mission
                                             </motion.button>
                                         ) : (
@@ -324,14 +324,14 @@ export default function CaseFilePage() {
                                                 onClick={runMission}
                                                 disabled={actions.length === 0}
                                                 className={cn(
-                                                    "w-full py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all shadow-sm",
+                                                    "w-full py-3 lg:py-3.5 rounded-xl font-medium text-sm lg:text-base flex items-center justify-center gap-2 transition-all shadow-sm",
                                                     actions.length > 0
                                                         ? "bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20"
                                                         : "bg-white/5 text-muted-foreground cursor-not-allowed border border-white/5"
                                                 )}
                                                 whileTap={actions.length > 0 ? { scale: 0.98 } : {}}
                                             >
-                                                <Play className="w-4 h-4" />
+                                                <Play className="w-4 h-4 lg:w-5 lg:h-5" />
                                                 Execute Actions
                                             </motion.button>
                                         )}
