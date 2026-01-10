@@ -19,3 +19,4 @@ python-dotenv==1.0.1
 # Utilities
 aiofiles==24.1.0          # Async file operations (optional but recommended for video handling)
 httpx==0.28.1             # For any internal async HTTP requests
+yt-dlp==2024.12.23        # For downloading YouTube videos

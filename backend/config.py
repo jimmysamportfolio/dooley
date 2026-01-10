@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     browser_timeout_ms: int = 30000
     
     class Config:
-        env_file = ".env"
+        env_file = (".env", "../.env")
         env_file_encoding = "utf-8"
 
 
