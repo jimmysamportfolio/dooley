@@ -61,7 +61,19 @@ export function TechStackSection() {
             </div>
 
             {/* The Main "LiveKit Style" Container */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-0 bg-[#0A0A0A] border border-white/10 rounded-3xl overflow-hidden shadow-2xl ring-1 ring-white/5">
+            <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-0 bg-[#0A0A0A] border border-white/10 rounded-3xl overflow-hidden shadow-2xl ring-1 ring-white/5">
+
+                {/* Diagonal Diamond Grid Background */}
+                <div
+                    className="absolute inset-0 opacity-30 pointer-events-none"
+                    style={{
+                        backgroundImage: `
+                            linear-gradient(45deg, transparent 48%, rgba(255,255,255,0.03) 49%, rgba(255,255,255,0.03) 51%, transparent 52%),
+                            linear-gradient(-45deg, transparent 48%, rgba(255,255,255,0.03) 49%, rgba(255,255,255,0.03) 51%, transparent 52%)
+                        `,
+                        backgroundSize: '60px 60px',
+                    }}
+                />
 
                 {/* LEFT COLUMN: Navigation Tabs */}
                 <div className="lg:col-span-4 flex flex-col border-r border-white/5 bg-white/[0.02]">
