@@ -1,0 +1,35 @@
+# General
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
+
+# Python / FastAPI
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Node.js / Next.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp*
+.next/
+out/
+.vercel/
+
+# Project Specific
+backend/temp/
+.gemini/
+.agent/description/
