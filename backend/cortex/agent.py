@@ -11,6 +11,7 @@ This is more robust because it adapts to what's actually on screen.
 """
 import asyncio
 import base64
+import re
 from pathlib import Path
 from typing import Optional, List
 
@@ -233,7 +234,6 @@ Respond with ONLY the badge number (e.g., "5")."""
         await self.callback.on_log(f"Found element at badge: {response_text}")
         
         # Extract badge number
-        import re
         numbers = re.findall(r'\d+', response_text)
         if not numbers:
             raise ValueError(f"Could not find element: {description}")
@@ -286,7 +286,6 @@ Respond with ONLY the badge number (e.g., "5")."""
         await self.callback.on_log(f"Found input at badge: {response_text}")
         
         # Extract badge number
-        import re
         numbers = re.findall(r'\d+', response_text)
         if not numbers:
             raise ValueError(f"Could not find input field: {description}")
