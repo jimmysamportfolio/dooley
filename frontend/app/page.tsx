@@ -16,55 +16,19 @@ import { LandingContent } from "@/components/landing/LandingContent";
 import { TechStackSection } from "@/components/sections/TechStackSection";
 import { HowItWorks } from "@/components/sections/HowItWorks";
 
-// System status types
-type SystemStatus = "IDLE" | "ANALYZING" | "RUNNING" | "COMPLETE";
-type ViewMode = "setup" | "execution";
+// API imports
+import {
+    analyzeVideo,
+    analyzeUrl,
+    startExecution,
+    subscribeToExecution,
+    type ExecutionPlan,
+    type ActionStep,
+} from "@/lib/api";
 
-// Mock actions that will be executed
-const MOCK_ACTIONS: Omit<Action, "status">[] = [
-    {
-        id: "1",
-        index: 1,
-        type: "NAVIGATE",
-        description: "Access target portal",
-        target: "https://target-site.com/login",
-    },
-    {
-        id: "2",
-        index: 2,
-        type: "WAIT",
-        description: "Confirm page loaded",
-        target: "document.readyState",
-    },
-    {
-        id: "3",
-        index: 3,
-        type: "TYPE",
-        description: "Input username field",
-        target: "input#username",
-    },
-    {
-        id: "4",
-        index: 4,
-        type: "TYPE",
-        description: "Input password field",
-        target: "input#password",
-    },
-    {
-        id: "5",
-        index: 5,
-        type: "CLICK",
-        description: "Submit credentials",
-        target: "button.submit",
-    },
-    {
-        id: "6",
-        index: 6,
-        type: "WAIT",
-        description: "Verify access granted",
-        target: "dashboard.visible",
-    },
-];
+// System status types
+type SystemStatus = "IDLE" | "ANALYZING" | "RUNNING" | "COMPLETE" | "ERROR";
+type ViewMode = "setup" | "execution";
 
 // Helper to generate timestamps
 function getTimestamp(): string {
@@ -77,14 +41,29 @@ function generateId(): string {
     return Math.random().toString(36).substring(2, 9);
 }
 
+// Map backend ActionStep to frontend Action type
+function mapActionStepToAction(step: ActionStep): Action {
+    return {
+        id: String(step.id),
+        index: step.id,
+        type: step.action_type === "SCROLL" ? "WAIT" : step.action_type, // Map SCROLL to WAIT for now
+        description: step.description,
+        status: "pending" as ActionStatus,
+        target: step.value || step.cached_selector || undefined,
+    };
+}
+
 export default function CaseFilePage() {
     const [viewMode, setViewMode] = useState<ViewMode>("setup");
     const [status, setStatus] = useState<SystemStatus>("IDLE");
     const [actions, setActions] = useState<Action[]>([]);
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [currentStep, setCurrentStep] = useState<number>(-1);
+    const [executionPlan, setExecutionPlan] = useState<ExecutionPlan | null>(null);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
     const completionHandled = useRef(false);
     const inputSectionRef = useRef<HTMLDivElement>(null);
+    const sseCleanupRef = useRef<(() => void) | null>(null);
 
     // Derive current action description
     const currentAction = currentStep >= 0 && currentStep < actions.length ? actions[currentStep] : null;
@@ -103,122 +82,149 @@ export default function CaseFilePage() {
         ]);
     }, []);
 
-    // Initialize actions with pending status
-    const initializeActions = useCallback(() => {
-        setActions(
-            MOCK_ACTIONS.map((action) => ({
-                ...action,
-                status: "pending" as ActionStatus,
-            }))
-        );
-    }, []);
-
-    // Handle video upload (simulated)
-    const handleVideoUpload = useCallback(() => {
+    // Handle video file upload
+    const handleVideoUpload = useCallback(async (file: File) => {
         setStatus("ANALYZING");
-        setViewMode("execution"); // Transition to split-screen
-        addLog("SYSTEM", "SURVEILLANCE FILM LOADED");
-        addLog("SUBJ", "INITIATING FRAME ANALYSIS...");
+        setIsAnalyzing(true);
+        setViewMode("execution");
+        addLog("SYSTEM", `VIDEO LOADED: ${file.name}`);
+        addLog("SUBJ", "UPLOADING TO ANALYSIS ENGINE...");
 
-        // Simulate analysis delay
-        setTimeout(() => {
-            addLog("SUBJ", "FRAME EXTRACTION COMPLETE - 247 FRAMES");
-            addLog("SUBJ", "SCANNING FOR UI ELEMENTS...");
-        }, 1000);
+        try {
+            const plan = await analyzeVideo(file);
+            setExecutionPlan(plan);
 
-        setTimeout(() => {
-            addLog("SUBJ", "LOGIN BUTTON IDENTIFIED");
-            addLog("SUBJ", "INPUT FIELDS DETECTED [2]");
-            addLog("CONFIRM", "ANALYSIS COMPLETE - 6 ACTIONS QUEUED");
-            initializeActions();
+            const mappedActions = plan.steps.map(mapActionStepToAction);
+            setActions(mappedActions);
+
+            addLog("SUBJ", `FRAME ANALYSIS COMPLETE`);
+            addLog("CONFIRM", `${plan.steps.length} ACTIONS EXTRACTED`);
+            if (plan.source_url) {
+                addLog("SUBJ", `SOURCE URL DETECTED: ${plan.source_url}`);
+            }
             setStatus("IDLE");
-        }, 2500);
-    }, [addLog, initializeActions]);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Unknown error";
+            addLog("ERROR", `ANALYSIS FAILED: ${errorMessage}`);
+            setStatus("ERROR");
+        } finally {
+            setIsAnalyzing(false);
+        }
+    }, [addLog]);
 
-    // Run mission simulation
-    const runMission = useCallback(() => {
-        if (actions.length === 0) return;
+    // Handle URL submission
+    const handleUrlSubmit = useCallback(async (url: string) => {
+        setStatus("ANALYZING");
+        setIsAnalyzing(true);
+        setViewMode("execution");
+        addLog("SYSTEM", `URL SUBMITTED: ${url}`);
+        addLog("SUBJ", "DOWNLOADING AND ANALYZING VIDEO...");
+
+        try {
+            const plan = await analyzeUrl(url);
+            setExecutionPlan(plan);
+
+            const mappedActions = plan.steps.map(mapActionStepToAction);
+            setActions(mappedActions);
+
+            addLog("SUBJ", `VIDEO ANALYSIS COMPLETE`);
+            addLog("CONFIRM", `${plan.steps.length} ACTIONS EXTRACTED`);
+            if (plan.source_url) {
+                addLog("SUBJ", `SOURCE URL DETECTED: ${plan.source_url}`);
+            }
+            setStatus("IDLE");
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Unknown error";
+            addLog("ERROR", `ANALYSIS FAILED: ${errorMessage}`);
+            setStatus("ERROR");
+        } finally {
+            setIsAnalyzing(false);
+        }
+    }, [addLog]);
+
+    // Run mission with real execution
+    const runMission = useCallback(async () => {
+        if (actions.length === 0 || !executionPlan) return;
 
         setStatus("RUNNING");
         setCurrentStep(0);
         addLog("SYSTEM", "EXECUTION SEQUENCE INITIATED");
-    }, [actions.length, addLog]);
+
+        try {
+            const executionId = crypto.randomUUID();
+            await startExecution(executionId, executionPlan);
+
+            addLog("SUBJ", `EXECUTION ID: ${executionId}`);
+            addLog("SUBJ", "CONNECTING TO LIVE STREAM...");
+
+            // Subscribe to SSE for real-time updates
+            const cleanup = subscribeToExecution(executionId, {
+                onActionUpdate: (stepId, actionStatus, screenshot) => {
+                    setActions(prev => prev.map(action => {
+                        if (action.id === String(stepId)) {
+                            return {
+                                ...action,
+                                status: actionStatus === "running" ? "active"
+                                    : actionStatus === "complete" ? "complete"
+                                        : "pending"
+                            };
+                        }
+                        // Mark previous steps as complete
+                        if (parseInt(action.id) < stepId && actionStatus === "running") {
+                            return { ...action, status: "complete" };
+                        }
+                        return action;
+                    }));
+                    setCurrentStep(stepId - 1); // stepId is 1-indexed
+                },
+                onLog: (message, level) => {
+                    const logType: LogType = level === "error" ? "ERROR"
+                        : level === "success" ? "CONFIRM"
+                            : "SUBJ";
+                    addLog(logType, message.toUpperCase());
+                },
+                onComplete: () => {
+                    setStatus("COMPLETE");
+                    addLog("CONFIRM", "ALL ACTIONS EXECUTED SUCCESSFULLY");
+                    addLog("SYSTEM", "MISSION COMPLETE");
+                },
+                onError: (error) => {
+                    addLog("ERROR", error.toUpperCase());
+                    setStatus("ERROR");
+                },
+            });
+
+            sseCleanupRef.current = cleanup;
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Unknown error";
+            addLog("ERROR", `EXECUTION FAILED: ${errorMessage}`);
+            setStatus("ERROR");
+        }
+    }, [actions.length, executionPlan, addLog]);
 
     // Stop mission
     const stopMission = useCallback(() => {
+        if (sseCleanupRef.current) {
+            sseCleanupRef.current();
+            sseCleanupRef.current = null;
+        }
         setStatus("IDLE");
         setCurrentStep(-1);
         addLog("ERROR", "OPERATION ABORTED BY OPERATOR");
     }, [addLog]);
 
-    // Effect to handle step progression during RUNNING status
-    useEffect(() => {
-        if (status !== "RUNNING" || currentStep < 0) {
-            completionHandled.current = false;
-            return;
-        }
-
-        if (currentStep >= actions.length) {
-            if (!completionHandled.current) {
-                completionHandled.current = true;
-                setTimeout(() => {
-                    setStatus("COMPLETE");
-                    addLog("CONFIRM", "ALL ACTIONS EXECUTED SUCCESSFULLY");
-                    addLog("SYSTEM", "CASE FILE COMPLETE");
-                }, 0);
-            }
-            return;
-        }
-
-        const currentAction = actions[currentStep];
-
-        // Use setTimeout to update actions state (avoids sync setState in effect)
-        const updateTimer = setTimeout(() => {
-            setActions((prev) =>
-                prev.map((action, idx) => ({
-                    ...action,
-                    status:
-                        idx < currentStep
-                            ? "complete"
-                            : idx === currentStep
-                                ? "active"
-                                : "pending",
-                }))
-            );
-            addLog("ACTION", `${currentAction.type} - ${currentAction.description.toUpperCase()}`);
-
-            if (currentAction.type === "CLICK" || currentAction.type === "TYPE") {
-                setTimeout(() => {
-                    addLog("SUBJ", `ELEMENT LOCATED: ${currentAction.target}`);
-                }, 500);
-            }
-        }, 0);
-
-        // Progress to next step after delay
-        const progressTimer = setTimeout(() => {
-            setActions((prev) =>
-                prev.map((action, idx) => ({
-                    ...action,
-                    status: idx <= currentStep ? "complete" : action.status,
-                }))
-            );
-            addLog("CONFIRM", `STEP ${currentStep + 1} COMPLETE`);
-            setCurrentStep((prev) => prev + 1);
-        }, 2000);
-
-        return () => {
-            clearTimeout(updateTimer);
-            clearTimeout(progressTimer);
-        };
-    }, [status, currentStep, actions, addLog]);
-
     // Reset functionality
     const resetMission = useCallback(() => {
+        if (sseCleanupRef.current) {
+            sseCleanupRef.current();
+            sseCleanupRef.current = null;
+        }
         setStatus("IDLE");
         setActions([]);
         setLogs([]);
         setCurrentStep(-1);
         setViewMode("setup");
+        setExecutionPlan(null);
     }, []);
 
     const scrollToInput = () => {
@@ -280,7 +286,7 @@ export default function CaseFilePage() {
                         {/* Hero with Input - Pass Input as Children */}
                         <div ref={inputSectionRef}>
                             <LiveKitHero>
-                                <MissionInput onUpload={handleVideoUpload} onUrlSubmit={handleVideoUpload} />
+                                <MissionInput onUpload={handleVideoUpload} onUrlSubmit={handleUrlSubmit} isLoading={isAnalyzing} />
                             </LiveKitHero>
                         </div>
 

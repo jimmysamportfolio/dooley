@@ -15,7 +15,7 @@ from fastapi.responses import StreamingResponse
 import aiofiles
 
 from cortex.schemas import ExecutionPlan, ActionStep
-from cortex.vision_parser import parse_video
+from cortex.vision_parser import parse_video, parse_video_from_url
 from cortex.navigator import Navigator, NavigatorCallback
 from api.sse import ExecutionStream
 from config import get_settings
@@ -85,6 +85,41 @@ async def analyze_video(video: UploadFile = File(...)) -> ExecutionPlan:
     finally:
         # Clean up temp file
         video_path.unlink(missing_ok=True)
+
+
+class UrlAnalyzeRequest:
+    """Request body for URL analysis."""
+    url: str
+
+
+@router.post("/analyze-url")
+async def analyze_video_url(request: dict) -> ExecutionPlan:
+    """
+    Analyze a video from a URL (YouTube, direct link, etc.).
+    
+    Accepts: { "url": "https://..." }
+    Returns: ExecutionPlan with extracted steps
+    """
+    url = request.get("url")
+    if not url:
+        raise HTTPException(
+            status_code=400,
+            detail="Missing 'url' field in request body"
+        )
+    
+    # Create temp directory for downloaded video
+    temp_dir = Path(settings.temp_dir)
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    
+    try:
+        # Download and analyze video from URL
+        plan = await parse_video_from_url(url, temp_dir)
+        return plan
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to analyze video from URL: {str(e)}"
+        )
 
 
 @router.post("/execute/{execution_id}")
