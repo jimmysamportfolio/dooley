@@ -138,7 +138,7 @@ export function ActionList({ actions, className, darkMode = true }: ActionListPr
             {/* Header */}
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
                 <div className="flex items-center gap-2">
-                    <span className="text-xs lg:text-sm uppercase tracking-widest font-bold text-brand-persimmon font-display">
+                    <span className="text-xs lg:text-sm uppercase tracking-widest font-bold text-brand-turquoise font-display">
                         ▶ ACTION QUEUE
                     </span>
                 </div>

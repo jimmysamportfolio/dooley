@@ -1,20 +1,24 @@
-// ... imports
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Play, Square, RotateCcw } from "lucide-react";
-import { MicrofilmViewer } from "@/components/dashboard/VideoFeed";
 import { ActionList, type Action, type ActionStatus } from "@/components/dashboard/ActionList";
 import { BrowserView } from "@/components/dashboard/BrowserView";
 import { DraggableLog } from "@/components/dashboard/DraggableLog";
 import { type LogEntry, type LogType } from "@/components/dashboard/TerminalLog";
 import { cn } from "@/lib/utils";
 
+import { LiveKitHero } from "@/components/hero/LiveKitHero";
+import { MissionInput } from "@/components/landing/MissionInput";
+import { LandingContent } from "@/components/landing/LandingContent";
+import { TechStackSection } from "@/components/sections/TechStackSection";
+import { HowItWorks } from "@/components/sections/HowItWorks";
+
 // System status types
 type SystemStatus = "IDLE" | "ANALYZING" | "RUNNING" | "COMPLETE";
-type ViewMode = "upload" | "execution";
+type ViewMode = "setup" | "execution";
 
 // Mock actions that will be executed
 const MOCK_ACTIONS: Omit<Action, "status">[] = [
@@ -74,13 +78,13 @@ function generateId(): string {
 }
 
 export default function CaseFilePage() {
-    const [viewMode, setViewMode] = useState<ViewMode>("upload");
+    const [viewMode, setViewMode] = useState<ViewMode>("setup");
     const [status, setStatus] = useState<SystemStatus>("IDLE");
-    const [isVideoLoaded, setIsVideoLoaded] = useState(false);
     const [actions, setActions] = useState<Action[]>([]);
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [currentStep, setCurrentStep] = useState<number>(-1);
     const completionHandled = useRef(false);
+    const inputSectionRef = useRef<HTMLDivElement>(null);
 
     // Derive current action description
     const currentAction = currentStep >= 0 && currentStep < actions.length ? actions[currentStep] : null;
@@ -111,7 +115,6 @@ export default function CaseFilePage() {
 
     // Handle video upload (simulated)
     const handleVideoUpload = useCallback(() => {
-        setIsVideoLoaded(true);
         setStatus("ANALYZING");
         setViewMode("execution"); // Transition to split-screen
         addLog("SYSTEM", "SURVEILLANCE FILM LOADED");
@@ -212,35 +215,83 @@ export default function CaseFilePage() {
     // Reset functionality
     const resetMission = useCallback(() => {
         setStatus("IDLE");
-        setIsVideoLoaded(false);
         setActions([]);
         setLogs([]);
         setCurrentStep(-1);
-
-        setViewMode("upload"); // Go back to upload screen
+        setViewMode("setup");
     }, []);
 
+    const scrollToInput = () => {
+        inputSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    };
+
+    // Header Component
+    const Header = () => (
+        <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-6 lg:px-8 py-4 lg:py-6">
+            <div className="flex items-center gap-3">
+                <Image src="/Dooley.png" alt="Dooley" width={32} height={32} className="object-contain" />
+                <h1 className="text-xl font-normal text-foreground font-display tracking-tighter">Dooley</h1>
+            </div>
+
+            <div className="flex items-center gap-6">
+                <a href="https://github.com/jimmysamportfolio/dooley" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-white hover:text-brand-turquoise transition-colors hidden sm:block">
+                    Github
+                </a>
+                <a href="https://devpost.com" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-white hover:text-brand-turquoise transition-colors hidden sm:block">
+                    Devpost
+                </a>
+
+                <motion.a
+                    href="https://journeyhacks.sfusurge.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm flex items-center gap-2 bg-brand-turquoise text-black hover:bg-brand-turquoise/90"
+                >
+                    Journey Hacks 2026
+                    <Play className="w-3 h-3 ml-1 fill-current" />
+                </motion.a>
+            </div>
+        </div>
+    );
+
     return (
-        <div className="min-h-screen w-screen bg-background text-foreground grid-bg">
+        <div className="min-h-screen w-screen bg-background text-foreground grid-bg relative overflow-hidden">
             {/* Ambient Glows */}
             <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-brand-turquoise/5 rounded-full blur-[100px] pointer-events-none" />
 
+            {/* Global Header (except execution mode which has its own panel header) */}
+            {viewMode !== "execution" && <Header />}
+
             <AnimatePresence mode="wait">
-                {viewMode === "upload" ? (
-                    /* Full Screen Upload View - Horizontal Layout */
+                {viewMode === "setup" ? (
+                    /* Unified Setup View */
                     <motion.div
-                        key="upload"
+                        key="setup"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0, scale: 0.98 }}
-                        transition={{ duration: 0.3 }}
+                        transition={{ duration: 0.4 }}
+                        className="min-h-screen flex flex-col pt-16"
                     >
-                        <MicrofilmViewer
-                            isLoaded={isVideoLoaded}
-                            isAnalyzing={status === "ANALYZING"}
-                            onUpload={handleVideoUpload}
-                            fullScreen
-                        />
+                        {/* Hero with Input - Pass Input as Children */}
+                        <div ref={inputSectionRef}>
+                            <LiveKitHero>
+                                <MissionInput onUpload={handleVideoUpload} onUrlSubmit={handleVideoUpload} />
+                            </LiveKitHero>
+                        </div>
+
+                        {/* Tech Stack Section */}
+                        <TechStackSection />
+
+                        {/* How It Works Section */}
+                        <HowItWorks />
+
+                        {/* Landing Content */}
+                        <LandingContent />
                     </motion.div>
                 ) : (
                     /* Split Screen Execution View */
@@ -252,18 +303,18 @@ export default function CaseFilePage() {
                         transition={{ duration: 0.4 }}
                         className="min-h-screen flex flex-col relative z-10"
                     >
-                        {/* Header */}
+                        {/* Header for Execution Mode */}
                         <div className="relative z-10 flex items-center justify-between px-6 lg:px-8 py-4 lg:py-5 border-b border-white/10 bg-white/[0.02] backdrop-blur-md">
                             <div className="flex items-center gap-3 lg:gap-4">
                                 <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shadow-sm">
-                                    <Image src="/dooley-favicon.png" alt="Dooley" width={32} height={32} className="object-contain" />
+                                    <Image src="/Dooley.png" alt="Dooley" width={32} height={32} className="object-contain" />
                                 </div>
                                 <div>
-                                    <h1 className="text-xl lg:text-2xl font-bold text-foreground tracking-wide font-display">
+                                    <h1 className="text-xl lg:text-2xl font-normal text-foreground tracking-tighter font-display">
                                         Dooley
                                     </h1>
                                     <p className="text-xs lg:text-sm text-muted-foreground">
-                                        Mission Control
+                                        Execution
                                     </p>
                                 </div>
                             </div>
@@ -273,7 +324,7 @@ export default function CaseFilePage() {
                                 "px-4 lg:px-5 py-2 lg:py-2.5 rounded-full text-xs lg:text-sm font-medium border shadow-sm backdrop-blur-sm",
                                 status === "IDLE" && "bg-white/5 border-white/10 text-muted-foreground",
                                 status === "ANALYZING" && "bg-brand-turquoise/10 border-brand-turquoise/20 text-brand-turquoise",
-                                status === "RUNNING" && "bg-primary/10 border-primary/20 text-primary",
+                                status === "RUNNING" && "bg-brand-turquoise/10 border-brand-turquoise/20 text-brand-turquoise",
                                 status === "COMPLETE" && "bg-green-500/10 border-green-500/20 text-green-400"
                             )}>
                                 <div className="flex items-center gap-2">
@@ -281,7 +332,7 @@ export default function CaseFilePage() {
                                         "w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full",
                                         status === "IDLE" && "bg-muted-foreground",
                                         status === "ANALYZING" && "bg-brand-turquoise animate-pulse",
-                                        status === "RUNNING" && "bg-primary animate-pulse",
+                                        status === "RUNNING" && "bg-brand-turquoise animate-pulse",
                                         status === "COMPLETE" && "bg-green-500"
                                     )} />
                                     {status === "IDLE" && "Ready"}
@@ -304,7 +355,7 @@ export default function CaseFilePage() {
                                         {status === "RUNNING" ? (
                                             <motion.button
                                                 onClick={stopMission}
-                                                className="w-full py-3 lg:py-3.5 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 font-medium text-sm lg:text-base flex items-center justify-center gap-2 hover:bg-red-500/20 transition-colors shadow-sm"
+                                                className="w-full py-3 lg:py-3.5 rounded-xl bg-brand-turquoise/10 text-brand-turquoise border border-brand-turquoise/20 font-medium text-sm lg:text-base flex items-center justify-center gap-2 hover:bg-brand-turquoise/20 transition-colors shadow-sm"
                                                 whileTap={{ scale: 0.98 }}
                                             >
                                                 <Square className="w-4 h-4 lg:w-5 lg:h-5" />
@@ -326,7 +377,7 @@ export default function CaseFilePage() {
                                                 className={cn(
                                                     "w-full py-3 lg:py-3.5 rounded-xl font-medium text-sm lg:text-base flex items-center justify-center gap-2 transition-all shadow-sm",
                                                     actions.length > 0
-                                                        ? "bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20"
+                                                        ? "bg-brand-turquoise text-black hover:bg-brand-turquoise/90 shadow-lg shadow-brand-turquoise/20"
                                                         : "bg-white/5 text-muted-foreground cursor-not-allowed border border-white/5"
                                                 )}
                                                 whileTap={actions.length > 0 ? { scale: 0.98 } : {}}
