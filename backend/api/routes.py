@@ -131,7 +131,7 @@ async def run_execution(
 ) -> None:
     """Background task that runs the execution."""
     callback = SSENavigatorCallback(stream)
-    nav = Navigator(callback=callback, headless=False)
+    nav = Navigator(callback=callback, headless=settings.headless)
     
     try:
         await nav.start()

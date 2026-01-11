@@ -8,8 +8,9 @@ This module controls the browser automation using a hybrid approach:
 import asyncio
 import base64
 import json
+import re
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Optional
 
 from google import genai
 from google.genai import types
@@ -23,7 +24,6 @@ from config import get_settings
 settings = get_settings()
 
 
-# Set-of-Mark injection script
 # Load Set-of-Mark injection script
 def load_som_script():
     try:
@@ -312,7 +312,6 @@ Use the following JSON format for your response:
         await self.callback.on_log(f"Gemini response: {response_text}")
         
         try:
-            import json
             response_data = json.loads(response_text)
             badge_val = response_data.get("badge_number", "NOT_FOUND")
             reasoning = response_data.get("reasoning", "")
@@ -321,7 +320,6 @@ Use the following JSON format for your response:
              # Fallback if model fails JSON (unlikely with config)
              badge_val = "NOT_FOUND"
              if "NOT_FOUND" not in response_text:
-                 import re
                  nums = re.findall(r'\d+', response_text)
                  if nums: badge_val = nums[0]
 
@@ -370,7 +368,6 @@ Use the following JSON format for your response:
         if expected_url_hint.startswith("http") or ".com" in expected_url_hint or ".org" in expected_url_hint:
             current_url = self.page.url
             # Extract domain from expected (e.g., "https://github.com" -> "github.com")
-            import re
             domain_match = re.search(r'(?:https?://)?([^/]+)', expected_url_hint)
             expected_domain = domain_match.group(1) if domain_match else expected_url_hint
             
@@ -479,7 +476,6 @@ Respond with ONLY the badge number."""
                 ]
             )
             
-            import re
             numbers = re.findall(r'\d+', alt_response.text.strip())
             if numbers:
                 badge_num = int(numbers[0])
