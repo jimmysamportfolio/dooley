@@ -4,9 +4,7 @@ uvicorn[standard]==0.34.0
 python-multipart==0.0.20  # Critical for video file uploads (UploadFile)
 
 # AI & Intelligence (Gemini)
-# Note: As of late 2025, google-generativeai is in maintenance mode. 
-# We stick to this version to match the "import google.generativeai" code in your cortex files.
-google-generativeai==0.8.6
+google-genai==1.0.0
 
 # Browser Automation (The Hands)
 playwright==1.57.0
@@ -20,3 +18,4 @@ python-dotenv==1.0.1
 aiofiles==24.1.0          # Async file operations (optional but recommended for video handling)
 httpx==0.28.1             # For any internal async HTTP requests
 yt-dlp==2024.12.23        # For downloading YouTube videos
+opencv-python==4.10.0.84  # For video frame extraction
